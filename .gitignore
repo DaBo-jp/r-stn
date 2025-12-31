@@ -39,3 +39,7 @@ experiments/data/
 # C++ Build artifacts
 rstn/cpp_src/*.o
 rstn/cpp_src/rstn_runner
+
+# Output Reports
+reports/*
+output_reports/*

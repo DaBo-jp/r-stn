@@ -30,7 +30,11 @@ def visualize_dynamic(file_path):
     ax = fig.add_subplot(111, projection='3d')
 
     # 出力先
-    out_dir = "analysis_Case5"
+    reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'reports')
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
+        
+    out_dir = os.path.join(reports_dir, "analysis_Case5")
     os.makedirs(out_dir, exist_ok=True)
 
     for i in range(frames):

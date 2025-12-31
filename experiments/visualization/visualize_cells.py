@@ -12,7 +12,14 @@ import math
 # 設定
 # =========================================================================
 DATA_DIR = "experiment_data"
-OUTPUT_VIDEO = "brain_wave_comparison_7x7.mp4"
+
+# reportsディレクトリの準備
+REPORTS_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'reports')
+if not os.path.exists(REPORTS_DIR):
+    os.makedirs(REPORTS_DIR)
+
+OUTPUT_VIDEO = os.path.join(REPORTS_DIR, "brain_wave_comparison_7x7.mp4")
+
 N = 32
 GRID_SIZE = 7  # 7x7 = 49個
 MAX_FILES = GRID_SIZE * GRID_SIZE
@@ -55,7 +62,21 @@ all_amps = []
 titles = []
 for f in selected_files:
     data = np.load(f)
-    amp_raw = data['amps']  # (Steps, N*N) または (Steps, N*N*N)
+    
+    # 新旧フォーマット対応
+    if 'amps' in data:
+        amp_raw = data['amps']
+    elif 'data' in data:
+        # 古いフォーマットで (Steps, Nodes, 2) の場合 1がAmp
+        raw = data['data']
+        if raw.ndim == 3 and raw.shape[2] == 2:
+            amp_raw = raw[:, :, 1]
+        else:
+            print(f"警告: {f} のデータ構造が不明です。")
+            continue
+    else:
+        print(f"警告: {f} に振幅データがありません。")
+        continue
     
     # --- ここでリシェイプ処理を追加 ---
     num_steps = amp_raw.shape[0]

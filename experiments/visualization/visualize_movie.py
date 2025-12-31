@@ -43,6 +43,11 @@ def create_movie(file_path):
                 idx = x + y*size + z*size*size
                 coords[idx] = [z, y, x] # Z(奥行), Y(縦), X(横)
 
+    # reportsディレクトリの準備
+    reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'reports')
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
+
     # 動画用フィギュアの準備 (2画面横並び)
     fig = plt.figure(figsize=(16, 8))
     ax1 = fig.add_subplot(121, projection='3d')
@@ -122,6 +127,7 @@ def create_movie(file_path):
 
     # 保存処理
     out_base = os.path.splitext(os.path.basename(file_path))[0]
+    out_base = os.path.join(reports_dir, out_base)
     
     # FFmpegが使えるか試す (MP4出力優先)
     try:
@@ -148,15 +154,15 @@ if __name__ == "__main__":
     target_file = None
     if os.path.exists(target_dir):
         
-    targets = ["Case5_Dynamic.npz", "Case6_Discrete.npz"]
-    
-    found = False
-    for t in targets:
-        path = os.path.join(target_dir, t)
-        if os.path.exists(path):
-            create_movie(path)
-            found = True
-            
-    if not found:
-        print("No target data (Case5/Case6) found in data_cpp/.")
-        print("Run 'run_cpp_sim.py' first.")
+        targets = ["Case5_Dynamic.npz", "Case6_Discrete.npz"]
+        
+        found = False
+        for t in targets:
+            path = os.path.join(target_dir, t)
+            if os.path.exists(path):
+                create_movie(path)
+                found = True
+                
+        if not found:
+            print("No target data (Case5/Case6) found in data_cpp/.")
+            print("Run 'run_cpp_sim.py' first.")

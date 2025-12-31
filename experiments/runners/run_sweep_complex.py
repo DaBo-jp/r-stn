@@ -1,6 +1,9 @@
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+
 import rstn_cpp
 import numpy as np
-import os
 import time
 import math
 import itertools

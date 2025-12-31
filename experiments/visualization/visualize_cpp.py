@@ -16,7 +16,7 @@ def visualize(file_path):
         loader = np.load(file_path)
         freqs = loader['freqs'] 
         amps = loader['amps']
-        fats = loader['fats']
+        fats = loader['fats'] if 'fats' in loader else np.zeros_like(amps)
         times = loader['compute_times']
         name = str(loader['name'])
         size = int(loader['size'])
@@ -35,6 +35,11 @@ def visualize(file_path):
             for x in range(size):
                 idx = x + y*size + z*size*size
                 coords[idx] = [z, y, x]
+
+    # 出力フォルダ作成
+    reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'reports')
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
 
     fig = plt.figure(figsize=(14, 10)) # 横幅を広げて情報スペース確保
     ax = fig.add_subplot(111, projection='3d')
@@ -101,7 +106,7 @@ def visualize(file_path):
         ax.view_init(elev=25, azim=45)
         
         # 保存
-        out_name = f"{name}_step{real_step:03d}.png"
+        out_name = os.path.join(reports_dir, f"{name}_step{real_step:03d}.png")
         plt.savefig(out_name, facecolor='black', bbox_inches='tight')
         print(f"  > Generated: {out_name} (Fatigue: {avg_fat:.1f})")
 

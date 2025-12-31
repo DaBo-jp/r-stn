@@ -7,15 +7,24 @@ matplotlib.use('Agg')
 import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
-# 同一ディレクトリにある rstn_node.py を確実に読み込むための設定
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from rstn.node import RSTNNode
+# rstnモジュールを正しくインポートするための設定
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+import rstn_cpp
 
 def run_ultimate_lifecycle_v3():
     # --- 1. 物理パラメータの設定 ---
-    # 質量 0.99, 粘性 0.35 (ゲル状) のノードを生成
-    node = RSTNNode(f_init=0.0, seed=123, inertia=0.99, viscosity=0.35)
+    # 質量 0.99, 粘性 0.35 (ゲル状) のノードを生成 (Box size=1 で代用)
+    box = rstn_cpp.RSTNBox(1, seed=123)
     
+    # パラメータ設定 (C++版のパラメータオブジェクト経由)
+    box.params.inertia = 0.99
+    box.params.viscosity = 0.35
+    box.params.update_derived() # 必須
+    
+    # 疲労限界の参照用 (デフォルト値を取得)
+    # C++版では fatigue_lim_min/max の範囲で決まるが、ここでは目安として平均値を使う
+    fatigue_limit_ref = (box.params.fatigue_lim_min + box.params.fatigue_lim_max) / 2.0
+
     # 全ライフサイクルをカバーする長尺ステップ
     steps = 2200 
     
@@ -54,28 +63,32 @@ def run_ultimate_lifecycle_v3():
     def update(frame):
         base_target, noisy_target, is_active = get_signal(frame)
         
-        # 3.2. プル型発振のシミュレート
+        # 入力の作成
+        inputs = []
         if is_active:
-            # 強度100で外部信号を注入
-            a_syn, f_syn = node.pull_and_synthesize([(100.0, noisy_target)])
-        else:
-            # 信号なし（0.0）
-            a_syn, f_syn = 0.0, node.f_self
-
-        # 3.2 & 3.3. 物理演算実行
-        node.gaussian_excitation(a_syn, f_syn) # 励起
-        force = node.rfa_update(f_syn, a_syn)   # 周波数更新 (RFA)
+            # 強度100で外部信号を注入 (Index 0)
+            inputs.append((0, (100.0, noisy_target)))
+        
+        # 物理演算実行
+        prev_fatigue = box.get_fatigue()[0] if frame > 0 else 0.0
+        
+        box.step(inputs, is_learning=True)
+        
+        # 状態取得
+        current_f = box.get_frequencies()[0]
+        current_fatigue = box.get_fatigue()[0]
+        current_amp = box.get_amplitudes()[0]
         
         # 履歴の保存
-        f_history.append(node.f_self)
+        f_history.append(current_f)
         # 信号停止中はターゲットを描画しない（nan）
         target_history.append(base_target if is_active else np.nan)
-        fatigue_history.append(node.fatigue)
-        amplitude_history.append(node.amplitude)
+        fatigue_history.append(current_fatigue)
+        amplitude_history.append(current_amp)
         
-        # 3.3. 代謝回転 (過労死・膠着死)
-        rebirth_occurred = node.metabolic_turnover(force)
-        
+        # 簡易転生判定: 疲労度が閾値付近から急激に落ちた場合
+        rebirth_occurred = (prev_fatigue > fatigue_limit_ref * 0.8) and (current_fatigue < prev_fatigue * 0.5)
+
         # 要所でのスナップショット保存
         if frame in [0, 500, 1000, 1500, 2000, 2199]:
             plt.savefig(f"snapshot_step_{frame}.png")
@@ -94,7 +107,7 @@ def run_ultimate_lifecycle_v3():
         # 中：疲労度（断続信号による回復、過労死を確認）
         ax2.clear()
         ax2.plot(fatigue_history, color='purple', lw=1.2)
-        ax2.axhline(node.fatigue_limit, color='red', linestyle=':', alpha=0.6, label='Death Limit')
+        ax2.axhline(fatigue_limit_ref, color='red', linestyle=':', alpha=0.6, label='Death Limit')
         ax2.set_title("Fatigue & Recovery")
         ax2.set_ylim(0, 1300)
         ax2.grid(True, alpha=0.2)

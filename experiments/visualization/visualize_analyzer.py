@@ -39,7 +39,11 @@ def visualize_analysis(file_path):
                 coords[idx] = [z, y, x]
 
     # 出力フォルダ作成
-    out_dir = f"analysis_{name}"
+    reports_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', '..', 'reports')
+    if not os.path.exists(reports_dir):
+        os.makedirs(reports_dir)
+        
+    out_dir = os.path.join(reports_dir, f"analysis_{name}")
     os.makedirs(out_dir, exist_ok=True)
 
     def save_multi_view(idx):

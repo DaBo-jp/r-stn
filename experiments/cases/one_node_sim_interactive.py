@@ -6,8 +6,9 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 import numpy as np
 
-sys.path.append(os.path.dirname(os.path.abspath(__file__)))
-from rstn.node import RSTNNode
+# rstnモジュールを正しくインポートするための設定
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
+import rstn_cpp
 
 class RSTNDualReporter:
     def __init__(self):
@@ -52,28 +53,42 @@ class RSTNDualReporter:
                 mode_str = "Continuous" if mode == 'cont' else "Intermittent"
                 print(f"\n[Processing Phase {p_id}: {p_name} ({mode_str})]")
                 
-                # node_id=0 で個体初期化
-                node = RSTNNode(seed=master_seed, node_id=0, inertia=0.99, viscosity=0.35)
-                node.dead_band = 1.0 
+                # node_id=0 で個体初期化 (Box size=1)
+                box = rstn_cpp.RSTNBox(1, seed=master_seed)
+                box.params.inertia = 0.99
+                box.params.viscosity = 0.35
+                box.params.dead_band = 1.0 
+                box.params.update_derived()
+
+                # 疲労限界リファレンス
+                fatigue_limit_ref = (box.params.fatigue_lim_min + box.params.fatigue_lim_max) / 2.0
                 
                 steps = 1200
                 data = {"f": [], "t": [], "fat": [], "rebirth": []}
 
                 for s in range(steps):
                     base_f, noisy_f, active = self.get_signal_logic(p_id, s, mode)
-                    # 信号OFF時は振幅0で供給
-                    a_syn, f_syn = (100.0, noisy_f) if active else (0.0, node.f_self)
                     
-                    # 統合インターフェース resonance を使用
-                    # 学習モード(is_learning=True)で物理シーケンスを実行
-                    rebirth, force = node.resonance(a_syn, f_syn, is_learning=True)
+                    # 入力リスト作成
+                    inputs = []
+                    if active:
+                        inputs.append((0, (100.0, noisy_f)))
                     
-                    if rebirth:
+                    prev_fat = box.get_fatigue()[0] if s > 0 else 0.0
+                    
+                    # ステップ実行
+                    box.step(inputs, is_learning=True)
+                    
+                    curr_f = box.get_frequencies()[0]
+                    curr_fat = box.get_fatigue()[0]
+                    
+                    # 簡易転生検知
+                    if (prev_fat > fatigue_limit_ref * 0.8) and (curr_fat < prev_fat * 0.5):
                         data["rebirth"].append(s)
 
-                    data["f"].append(node.f_self)
+                    data["f"].append(curr_f)
                     data["t"].append(base_f if active else np.nan)
-                    data["fat"].append(node.fatigue)
+                    data["fat"].append(curr_fat)
 
                 # --- 保存ファイル名の設定 ---
                 base_name = f"reports/phase{p_id}_{mode}"
@@ -87,7 +102,7 @@ class RSTNDualReporter:
                 ax1.legend(loc='upper right')
                 
                 ax2.plot(data["fat"], color='purple', label='Fatigue')
-                ax2.axhline(1000, color='red', ls=':', alpha=0.5, label='Death Limit')
+                ax2.axhline(fatigue_limit_ref, color='red', ls=':', alpha=0.5, label='Death Limit')
                 ax2.set_title("Metabolic Fatigue")
                 ax2.set_ylim(0, 1300)
                 ax2.legend(loc='upper right')

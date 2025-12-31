@@ -1,29 +1,40 @@
 import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', '..'))
 import time
 import numpy as np
-from rstn.box import RSTNBox
+import rstn_cpp
 
 def run(size=32):
-    box = RSTNBox(size=size)
-    history, compute_times = [], []
+    box = rstn_cpp.RSTNBox(size, seed=42)
+    history_f, history_a = [], []
+    compute_times = []
     accum_t = 0.0
     
     for s in range(400):
-        inputs = {}
+        inputs = []
         for z in range(size):
             for y in range(size):
-                inputs[0 + y*size + z*(size**2)] = (100.0, -30.0)
-                inputs[(size-1) + y*size + z*(size**2)] = (100.0, 30.0)
+                idx1 = 0 + y*size + z*(size**2)
+                idx2 = (size-1) + y*size + z*(size**2)
+                inputs.append((idx1, (100.0, -30.0)))
+                inputs.append((idx2, (100.0, 30.0)))
         
         t0 = time.perf_counter()
-        res = box.step(inputs, is_learning=True)
+        box.step(inputs, is_learning=True)
         t1 = time.perf_counter()
         
         accum_t += (t1 - t0)
-        history.append(res)
+        history_f.append(box.get_frequencies().copy())
+        history_a.append(box.get_amplitudes().copy())
         compute_times.append(accum_t)
 
-    np.savez("case2_data.npz", data=np.array(history), compute_times=np.array(compute_times), name="Case2_Territory", size=size)
+    np.savez("case2_data.npz", 
+             freqs=np.array(history_f, dtype=np.float32), 
+             amps=np.array(history_a, dtype=np.float32), 
+             compute_times=np.array(compute_times), 
+             name="Case2_Territory", 
+             size=size)
     print(f"Case2 Finished. Compute Time: {accum_t:.6f}s")
 
 if __name__ == "__main__":
