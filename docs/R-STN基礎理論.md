@@ -98,7 +98,7 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
 * RFA with Inertia, Viscosity & Dead Band (慣性・粘性・不感帯を伴うRFA):  学習時、ノードの周波数更新は瞬時的な上書きではなく、慣性（Inertia）と粘性（Viscosity）を持った運動方程式に従う。さらに、ターゲット周波数周辺での微細な振動（ハンチング）を防ぐために不感帯（Dead Band）を導入する。  
   1. **更新力の算出 (Force Calculation):** 周波数差 $\Delta f = |f_{input} - f_{old}|$ が不感帯 $\delta_{dead}$ 未満の場合、更新力をゼロとする。
 
-  $$Force = \begin{cases} 0 & \text{if } \Delta f < \delta_{dead} \\ \text{Sign}(\Delta \phi_{diff}) \cdot \left( A\_{resonance} \cdot \text{Q\_Curve}(\Delta f) \right) & \text{otherwise} \end{cases}$$  
+  $$Force = \begin{cases} 0 & \text{if } \Delta f < \delta_{dead} \\ \text{Sign}(\Delta \phi_{diff}) \cdot \left( A_{resonance} \cdot \text{Q\_Curve}(\Delta f) \right) & \text{otherwise} \end{cases}$$  
 
   * $\text{Q\_Curve}(\Delta f)$: ガウス近似による類似度係数。
 
