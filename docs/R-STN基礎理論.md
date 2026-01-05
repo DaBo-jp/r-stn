@@ -63,9 +63,9 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
   * 正 (+f): 正方向（時計回り）回転。  
   * 負 (-f): 負方向（反時計回り）回転。  
 * **Frequency Velocity (**$v_f$**):** 周波数の変化速度（慣性項）。  
-* Signed Input Range ($I_{in}$):  
+* **Signed Input Range ($I_{in}$):** 
   Box内での信号はすべて符号付き整数 $[-n, +n]$ で扱われる。これにより、信号同士の **「物理的な相殺（Cancellation）」**が発生する。  
-* Stochastic Diversity (確率的多様性):  
+* **Stochastic Diversity (確率的多様性):**   
   各ノードの周波数は初期化時に高品質な乱数によって決定され、空間的な不均一性を持つ。これにより、波の伝播速度が空間的に不均一となり、特別な屈折パラメータを持たずとも自然な **「散乱（Scattering）」** が発生する。
 
 ### **3.2. 重みなき干渉とプル型発振 (Weightless Interference & Pull-Based Oscillation)**
@@ -96,8 +96,7 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
 自己組織化の核心となる周波数更新および代謝ロジックである。これらの機能は **学習フェーズ**においてのみ活性化され、**駆動フェーズ**では停止する。
 
 * RFA with Inertia, Viscosity & Dead Band (慣性・粘性・不感帯を伴うRFA):  学習時、ノードの周波数更新は瞬時的な上書きではなく、慣性（Inertia）と粘性（Viscosity）を持った運動方程式に従う。さらに、ターゲット周波数周辺での微細な振動（ハンチング）を防ぐために不感帯（Dead Band）を導入する。  
-  1. 更新力の算出 (Force Calculation):  
-  周波数差 $\Delta f = |f_{input} - f_{old}|$ が不感帯 $\delta_{dead}$ 未満の場合、更新力をゼロとする。
+  1. **更新力の算出 (Force Calculation):** 周波数差 $\Delta f = |f_{input} - f_{old}|$ が不感帯 $\delta_{dead}$ 未満の場合、更新力をゼロとする。
 
   $$Force = \begin{cases} 0 & \text{if } \Delta f < \delta_{dead} \\ \text{Sign}(\Delta \phi_{diff}) \cdot \left( A_{resonance} \cdot \text{Q\_Curve}(\Delta f) \right) & \text{otherwise} \end{cases}$$  
 
@@ -115,7 +114,9 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
   ノードの生存（死滅と再生）は、膠着状態だけでなく、 **「発振による疲労蓄積」と「休息による回復」** のバランスによっても管理される。これにより、過剰に活動し続けるノードの固定化（Winner-take-allの弊害）を防ぎ、ネットワーク全体の流動性を維持する。  
   1. 疲労の蓄積と回復 (Accumulation & Recovery):  
   毎ステップ、ノードの発振強度 $A_{out}$ に応じて疲労値 $Fatigue$ が変動する。
+
   $$Fatigue_{next} = \begin{cases} Fatigue_{current} + C_{load} & \text{if } A_{out} > A_{threshold} \text{ (発振時)} \\ \max(0, Fatigue_{current} - C_{recover}) & \text{if } A_{out} \le A_{threshold} \text{ (休息時)} \end{cases}$$  
+  
   * $C_{load}$: 発振コスト（疲労蓄積率）。  
   * $C_{recover}$: 回復レート。
 
