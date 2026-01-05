@@ -95,11 +95,12 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
 
 自己組織化の核心となる周波数更新および代謝ロジックである。これらの機能は **学習フェーズ**においてのみ活性化され、**駆動フェーズ**では停止する。
 
-* RFA with Inertia, Viscosity & Dead Band (慣性・粘性・不感帯を伴うRFA):  
-  学習時、ノードの周波数更新は瞬時的な上書きではなく、慣性（Inertia）と粘性（Viscosity）を持った運動方程式に従う。さらに、ターゲット周波数周辺での微細な振動（ハンチング）を防ぐために不感帯（Dead Band）を導入する。  
+* RFA with Inertia, Viscosity & Dead Band (慣性・粘性・不感帯を伴うRFA):  学習時、ノードの周波数更新は瞬時的な上書きではなく、慣性（Inertia）と粘性（Viscosity）を持った運動方程式に従う。さらに、ターゲット周波数周辺での微細な振動（ハンチング）を防ぐために不感帯（Dead Band）を導入する。  
   1. 更新力の算出 (Force Calculation):  
   周波数差 $\Delta f = |f_{input} - f_{old}|$ が不感帯 $\delta_{dead}$ 未満の場合、更新力をゼロとする。
+
   $$Force = \begin{cases} 0 & \text{if } \Delta f < \delta_{dead} \\ \text{Sign}(\Delta \phi_{diff}) \cdot \left( A_{resonance} \cdot \text{Q\_Curve}(\Delta f) \right) & \text{otherwise} \end{cases}$$  
+
   * $\text{Q\_Curve}(\Delta f)$: ガウス近似による類似度係数。
 
 2. 速度更新 (Velocity Update):慣性 $I$ ($0.0 \sim 1.0$) を考慮して速度を更新し、さらにグリア粘性 $V$ ($0.0 \sim 1.0$) による減速を適用する。
@@ -191,21 +192,24 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
 
      （$\epsilon$ はゼロ除算防止用の微小値）  
    * Active Neighbor Count ($N_{neighbor}$) の場合分け:  
-     OGCは反射波を返さないため、Boxの境界付近では有効な近傍数が変化する。正規化を正しく行うため、以下のケースに応じて分母（または正規化係数）を動的に設定する。  
+     OGCは反射波を返さないため、Boxの境界付近では有効な近傍数が変化する。正規化を正しく行うため、以下のケースに応じて分母（または正規化係数）を動的に設定する。
+
      **Case A: Standard Connectivity (6-Neighbor / Von Neumann)**
      
      $$N_{neighbor} = \begin{cases} 6 & \text{(Inner Cell)} \\ 5 & \text{(Face Boundary)} \\ 4 & \text{(Edge Boundary)} \\ 3 & \text{(Corner Boundary)} \end{cases}$$  
      
-     Case B: High-Density Connectivity (26-Neighbor / Moore)  
+     **Case B: High-Density Connectivity (26-Neighbor / Moore)**  
+
      斜め接続（Diagonal）を含む高密度トポロジーの場合、面・稜線・角での接触を全て考慮する。
      
      $$N_{neighbor} = \begin{cases} 26 & \text{(Inner Cell)} \\ 17 & \text{(Face Boundary: } 26 - 3 \times 3) \\ 11 & \text{(Edge Boundary: } 26 - (3 \times 3 + 3 \times 2 - 1?)) \\ 7 & \text{(Corner Boundary)} \end{cases}$$  
 
 2. Gaussian Efficiency (ガウス励起効率):  
-   周波数差 $|f_{syn} - f_{self}|$ に基づき、ガウス関数LUTを用いて励起効率 $E$ ($0 \sim 65535$) を決定する。  
+   周波数差 $|f_{syn} - f_{self}|$ に基づき、ガウス関数LUTを用いて励起効率 $E$ ($0 \sim 65535$) を決定する。
+
    $$E = \text{Scale} \cdot \exp \left( - \frac{(f_{syn} - f_{self})^2}{2\sigma_{ex}^2} \right)$$
 
-   ここで、$\sigma_{ex}$ は励起の許容帯域幅（Q値の逆数に相当）を表すパラメータである。  
+   ここで、$\sigma_{ex}$は励起の許容帯域幅（Q値の逆数に相当）を表すパラメータである。  
 
 3. Next Amplitude (次ステップ強度):  
    
