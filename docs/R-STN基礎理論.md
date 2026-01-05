@@ -197,13 +197,27 @@ Box内部の各ノードは、固有の内部状態を持つ **「自律発振�
 
      **Case A: Standard Connectivity (6-Neighbor / Von Neumann)**
      
-     $$N_{neighbor} = \begin{cases} 6 & \text{(Inner Cell)} \\ 5 & \text{(Face Boundary)} \\ 4 & \text{(Edge Boundary)} \\ 3 & \text{(Corner Boundary)} \end{cases}$$  
+      $$
+      N_{\text{neighbor}} = \begin{cases}
+      6 & \text{(Inner Cell)} \\
+      5 & \text{(Face Boundary)} \\
+      4 & \text{(Edge Boundary)} \\
+      3 & \text{(Corner Boundary)}
+      \end{cases}
+      $$
      
      **Case B: High-Density Connectivity (26-Neighbor / Moore)**  
 
      斜め接続（Diagonal）を含む高密度トポロジーの場合、面・稜線・角での接触を全て考慮する。
      
-     $$N_{neighbor} = \begin{cases} 26 & \text{(Inner Cell)} \\ 17 & \text{(Face Boundary: } 26 - 3 \times 3) \\ 11 & \text{(Edge Boundary: } 26 - (3 \times 3 + 3 \times 2 - 1?)) \\ 7 & \text{(Corner Boundary)} \end{cases}$$  
+      $$
+      N_{\text{neighbor}} = \begin{cases}
+      26 & \text{(Inner Cell)} \\
+      17 & \text{(Face: } 3 \times 3 \times 2 - 1 \text{)} \\
+      11 & \text{(Edge: } 3 \times 2 \times 2 - 1 \text{)} \\
+      7  & \text{(Corner: } 2 \times 2 \times 2 - 1 \text{)}
+      \end{cases}
+      $$
 
 2. Gaussian Efficiency (ガウス励起効率):  
    周波数差 $|f_{syn} - f_{self}|$ に基づき、ガウス関数LUTを用いて励起効率 $E$ ($0 \sim 65535$) を決定する。
